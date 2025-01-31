@@ -1,14 +1,17 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   Text,
   StyleSheet,
   FlatList,
   Image,
   TouchableOpacity,
+  GestureResponderEvent,
 } from 'react-native';
 import {Header} from '../HomePage/Header';
 import HeroSection from '../HomePage/HeroSectioin';
 import {NavigationProp, RouteProp} from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useGetTask} from '../../api/task';
 
 interface TaskItem {
   id: string;
@@ -24,48 +27,38 @@ interface DailyTaskHomePageProps {
 export const DailyTaskHomePage: React.FC<DailyTaskHomePageProps> = ({
   navigation,
 }) => {
-  const tasks = [
-    {
-      id: '1',
-      title: 'Morning Yoga',
-      description: '30 minutes of stretching and yoga.',
-    },
-    {
-      id: '2',
-      title: 'Team Meeting',
-      description: 'Project update with the team at 10 AM.',
-    },
-    {
-      id: '3',
-      title: 'Code Review',
-      description: 'Review pull requests for new features.',
-    },
-    {
-      id: '4',
-      title: 'Evening Walk',
-      description: 'Relax and unwind with a 15-minute walk.',
-    },
-    {
-      id: '5',
-      title: 'Morning Yoga',
-      description: '30 minutes of stretching and yoga.',
-    },
-    {
-      id: '6',
-      title: 'Team Meeting',
-      description: 'Project update with the team at 10 AM.',
-    },
-    {
-      id: '7',
-      title: 'Code Review',
-      description: 'Review pull requests for new features.',
-    },
-    {
-      id: ' 8',
-      title: 'Evening Walk',
-      description: 'Relax and unwind with a 15-minute walk.',
-    },
-  ];
+  const [userid, setUserid] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchUserId = async () => {
+      try {
+        const storedUserId = await AsyncStorage.getItem('userid');
+        if (storedUserId) {
+          setUserid(storedUserId);
+        } else {
+          console.error('No user found in AsyncStorage');
+        }
+      } catch (error) {
+        console.error('Error retrieving User ID:', error);
+      }
+    };
+
+    fetchUserId();
+  }, []);
+
+  // Prevent API call if userid is not defined
+  const {data: tasks, isLoading, error} = useGetTask(userid || '');
+
+  const handleLogout = async (event: GestureResponderEvent) => {
+    try {
+      await AsyncStorage.removeItem('userid');
+      console.log('User ID removed');
+      setUserid(null); // Clear userId from state
+      navigation.navigate('Login');
+    } catch (error) {
+      console.error('Error removing User ID:', error);
+    }
+  };
 
   const renderTask = ({item}: {item: TaskItem}) => (
     <TouchableOpacity
@@ -82,7 +75,7 @@ export const DailyTaskHomePage: React.FC<DailyTaskHomePageProps> = ({
 
   return (
     <FlatList
-      data={tasks}
+      data={tasks || []}
       renderItem={renderTask}
       keyExtractor={item => item.id}
       contentContainerStyle={styles.container}
@@ -90,7 +83,13 @@ export const DailyTaskHomePage: React.FC<DailyTaskHomePageProps> = ({
         <>
           <Header />
           <HeroSection />
+          <Text onPress={handleLogout} style={styles.logoutText}>
+            LogOut
+          </Text>
           <Text style={styles.heading}>Today's Tasks</Text>
+          {isLoading && <Text>Loading tasks...</Text>}
+          {error && <Text>Error loading tasks</Text>}
+          {!userid && <Text>No user ID found. Please log in.</Text>}
         </>
       }
     />
@@ -100,7 +99,7 @@ export const DailyTaskHomePage: React.FC<DailyTaskHomePageProps> = ({
 const styles = StyleSheet.create({
   container: {
     backgroundColor: '#f8f9fa',
-    paddingBottom: 16, // For spacing at the bottom
+    paddingBottom: 16,
   },
   heading: {
     marginBottom: 10,
@@ -129,16 +128,11 @@ const styles = StyleSheet.create({
     color: '#7f8c8d',
     marginTop: 4,
   },
-  addButton: {
-    backgroundColor: '#27ae60',
-    borderRadius: 50,
-    alignSelf: 'center',
-    marginTop: 16,
-  },
-  addButtonText: {
-    color: '#fff',
+  logoutText: {
+    color: 'red',
     fontSize: 16,
-    fontWeight: 'bold',
+    textAlign: 'center',
+    marginTop: 10,
   },
   profileImage: {
     width: 32,

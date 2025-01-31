@@ -4,7 +4,7 @@ import CustomTextInput from '../../GenericComponent/CustomTextInput';
 import CustomDropdown from '../../GenericComponent/CustomDropdown';
 
 export const AddDailyTask = () => {
-  const [task, setTask] = useState('');
+  const [task, setTask, setDiscription] = useState('');
 
   const handleSubmit = () => {
     if (task.trim()) {
@@ -27,7 +27,7 @@ export const AddDailyTask = () => {
       />
       <CustomTextInput
         value={task}
-        onChangeText={setTask}
+        onChangeText={setDiscription}
         placeholder="Enter your task"
         style={styles.input}
         label="Description"
@@ -39,25 +39,7 @@ export const AddDailyTask = () => {
         style={styles.input}
         label="Sub Task"
       />
-      <CustomTextInput
-        value={task}
-        onChangeText={setTask}
-        placeholder="Enter your task"
-        style={styles.input}
-        label="tags"
-      />
-      <CustomDropdown
-        options={[
-          {label: ' High ', value: 'option1'},
-          {label: 'Medium', value: 'option2'},
-          {label: 'Low', value: 'option3'},
-        ]}
-        selectedValue=""
-        onValueChange={value => console.log(value)}
-        placeholder="Select an option"
-        style={styles.input}
-        label="Task Priority"
-      />
+
       <TouchableOpacity style={styles.button} onPress={handleSubmit}>
         <Text style={styles.buttonText}>Submit</Text>
       </TouchableOpacity>
